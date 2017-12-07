@@ -320,8 +320,8 @@ module.exports = class CanvasGame {
             'ball_5.png'
         ], 50, true, false);
 
-        ball.body.velocity.y = 50 + (Math.random() * 100);
-        ball.body.velocity.x = 0 + (Math.random() * 100);
+        ball.body.velocity.y = (50 + (Math.random() * 100)) * this.scaleFactorHeight;
+        ball.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth;
         ball.animations.play('spin');
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
@@ -335,8 +335,8 @@ module.exports = class CanvasGame {
         this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
         powerup.body.collideWorldBounds = true;
 
-        powerup.body.velocity.y = 150 + (Math.random() * 100);
-        powerup.body.velocity.x = 0 + (Math.random() * 100);
+        powerup.body.velocity.y = (150 + (Math.random() * 100)) * this.scaleFactorHeight;
+        powerup.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth;
         powerup.tint = Phaser.Color.hexToColor("#00FF00").color;
         powerup.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
     }
