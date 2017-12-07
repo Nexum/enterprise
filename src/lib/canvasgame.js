@@ -103,6 +103,12 @@ module.exports = class CanvasGame {
     }
 
     _create() {
+        this.counter.bricks = 0;
+        this.counter.balls = 0;
+        this.score = 0;
+        this.won = false;
+        this.lost = false;
+
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
         this.game.physics.arcade.checkCollision.down = false;
 
@@ -153,10 +159,6 @@ module.exports = class CanvasGame {
         this.bricks.setAll("anchor.x", 0.5);
         this.bricks.setAll("anchor.y", 0.5);
         this.bricks.physicsBodyType = Phaser.Physics.ARCADE;
-
-        this.counter.bricks = 0;
-        this.counter.balls = 0;
-        this.score = 0;
 
         for (let y = 0; y < 15; y++) {
             for (let x = 0; x < 10; x++) {
