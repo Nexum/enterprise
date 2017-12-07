@@ -1,8 +1,8 @@
 <font>
-  <info face="LiquorstoreJazz" size="72" bold="0" italic="0" charset="" unicode="" stretchH="100" smooth="1" aa="1" padding="2,2,2,2" spacing="0,0" outline="0"/>
+  <info face="LiquorstoreJazzWhite" size="72" bold="0" italic="0" charset="" unicode="" stretchH="100" smooth="1" aa="1" padding="2,2,2,2" spacing="0,0" outline="0"/>
   <common lineHeight="84" base="57" scaleW="311" scaleH="511" pages="1" packed="0"/>
   <pages>
-    <page id="0" file="LiquorstoreJazz.png"/>
+    <page id="0" file="LiquorstoreJazzWhite.png"/>
   </pages>
   <chars count="87">
     <char id="97" x="2" y="2" width="29" height="40" xoffset="4" yoffset="17" xadvance="35" page="0" chnl="15"/>
