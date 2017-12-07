@@ -16,9 +16,11 @@ module.exports = class CanvasGame {
     constructor(id) {
         this.height = window.innerHeight * window.devicePixelRatio;
         this.width = window.innerWidth * window.devicePixelRatio;
+        this.BOTMODE = false;
         this.scaleFactorWidth = this.width / 320;
         this.scaleFactorHeight = this.height / 568;
         this.powerUpHitCount = 3;
+        this.level = 1;
         this.highscore = 0;
         this.scores = {
             ballHitPaddle: 25,
@@ -64,10 +66,15 @@ module.exports = class CanvasGame {
     }
 
     saveHighscore() {
+        if (this.BOTMODE) {
+            return;
+        }
+
         this.api.saveHighscore(this.highscore);
     }
 
     _createMenu() {
+
         if (this.won) {
             this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
             this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
@@ -76,11 +83,21 @@ module.exports = class CanvasGame {
 
         if (this.lost) {
             this.lostText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
-            this.lostText.setText("Du hast verloren!");
+            this.lostText.setText("Du hast verloren!\nPunkte: " + this.score);
+            this.saveHighscore();
         }
 
         this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
         this.menuText.setText("Beruehre den Bildschirm um zu spielen!");
+
+        this.BOTMODE = false;
+        this.menuTextHidden = this.game.add.bitmapText(20 * this.scaleFactorWidth, 0 + this.textSize, 'font1', "", this.textSize);
+        this.menuTextHidden.setText("ICH BIN EIN BOT!");
+        this.menuTextHidden.inputEnabled = true;
+        this.menuTextHidden.events.onInputDown.addOnce(() => {
+            this.BOTMODE = true;
+            this.game.state.start("game");
+        }, this);
 
         this.highscoreText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((100 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
         this.highscoreText.setText("Hoechste Punktzahl: " + this.highscore);
@@ -246,25 +263,23 @@ module.exports = class CanvasGame {
         }
 
         // BOT
-        /*
-        let closestPowerUp = this.powerups.getClosestTo(this.paddle);
-        if (closestPowerUp && this.balls.countLiving() > 3) {
-            this.paddle.x = closestPowerUp.x;
+
+        if (this.BOTMODE) {
+            let closestPowerUp = this.powerups.getClosestTo(this.paddle);
+            if (closestPowerUp && this.balls.countLiving() > 3) {
+                this.paddle.x = closestPowerUp.x;
+            }
+
+            let closestBall = this.balls.getClosestTo({
+                x: 0,
+                y: this.height
+            });
+
+            if (closestBall && closestBall.alive) {
+                this.paddle.x = closestBall.x + this.game.rnd.between((this.paddle.width / 2) * -1, this.paddle.width / 2);
+            }
         }
 
-        let closestBall = this.balls.getClosestTo(this.paddle);
-
-        if (closestBall && closestBall.alive) {
-            this.paddle.x = closestBall.x;
-        }
-        */
-
-
-        this.paddle.width = this.paddleInitialWidth;
-        if (this.paddle.width > this.width) {
-            this.paddle.width = this.width;
-        }
-        //this.paddle.width = this.width;
 
         this.game.physics.arcade.collide(this.balls, this.paddle, this.ballHitPaddle, null, this);
         this.game.physics.arcade.collide(this.balls, this.bricks, this.ballHitBrick, null, this);
@@ -281,10 +296,14 @@ module.exports = class CanvasGame {
     }
 
     powerupHitPaddle(paddle, powerup) {
-        this.paddleInitialWidth += 10 * this.scaleFactorWidth;
+        this.paddle.width += 10 * this.scaleFactorWidth;
         if (this.paddleInitialWidth > this.width / 2) {
             this.paddleInitialWidth = this.width / 2;
         }
+        if (this.paddle.width < this.paddleInitialWidth) {
+            this.paddle.width = this.paddleInitialWidth;
+        }
+
         this.score += this.scores.powerUp;
 
         powerup.kill();
@@ -306,7 +325,7 @@ module.exports = class CanvasGame {
             if (diff > 45) {
                 diff = 45;
             }
-            ball.body.velocity.x = (-10 * diff);
+            ball.body.velocity.x = (-10 * diff) * this.level;
         }
         else if (ball.x > paddle.x) {
             //  Ball is on the right-hand side of the paddle
@@ -315,19 +334,19 @@ module.exports = class CanvasGame {
             if (diff > 45) {
                 diff = 45;
             }
-            ball.body.velocity.x = (10 * diff);
+            ball.body.velocity.x = (10 * diff) * this.level;
         }
         else {
             //  Ball is perfectly in the middle
             //  Add a little random X to stop it bouncing straight up!
-            ball.body.velocity.x = 2 + Math.random() * 8;
+            ball.body.velocity.x = (2 + Math.random() * 8) * this.level;
         }
 
         if (ball.hits >= this.powerUpHitCount) {
-            ball.body.velocity.y = ball.body.velocity.y * 1.5;
+            ball.body.velocity.y = (ball.body.velocity.y * 1.5) * this.level;
             ball.tint = Phaser.Color.hexToColor("#ff0800").color;
         } else if (ball.hits < this.powerUpHitCount) {
-            ball.body.velocity.y = ball.body.velocity.y * 1.1;
+            ball.body.velocity.y = (ball.body.velocity.y * 1.1) * this.level;
             ball.tint = Phaser.Color.hexToColor("#ffcb09").color;
         }
     }
@@ -379,8 +398,8 @@ module.exports = class CanvasGame {
         ball.body.collideWorldBounds = true;
         ball.body.bounce.set(1);
 
-        ball.body.velocity.y = (50 + (Math.random() * 100)) * this.scaleFactorHeight;
-        ball.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth;
+        ball.body.velocity.y = (50 + (Math.random() * 100)) * this.scaleFactorHeight * this.level;
+        ball.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth * this.level;
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
         ball.events.onOutOfBounds.add((ball) => {
@@ -396,8 +415,8 @@ module.exports = class CanvasGame {
         this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
         powerup.body.collideWorldBounds = true;
 
-        powerup.body.velocity.y = (150 + (Math.random() * 100)) * this.scaleFactorHeight;
-        powerup.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth;
+        powerup.body.velocity.y = (150 + (Math.random() * 100)) * this.scaleFactorHeight * this.level;
+        powerup.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth * this.level;
         powerup.tint = Phaser.Color.hexToColor("#00FF00").color;
         powerup.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
     }
