@@ -14,43 +14,95 @@ window.Phaser = require('phaser/build/custom/phaser-split');
 module.exports = class CanvasGame {
 
     constructor(id) {
-        this.height = window.innerHeight;
-        this.width = window.innerWidth;
+        this.height = window.innerHeight * window.devicePixelRatio;
+        this.width = window.innerWidth * window.devicePixelRatio;
+        this.scaleFactorWidth = this.width / 320;
+        this.scaleFactorHeight = this.height / 568;
+        this.powerUpHitCount = 3;
+        this.highscore = 0;
+        this.api = null;
+        this.textSize = 16 * this.scaleFactorWidth;
         this.score = 0;
-        this.game = new Phaser.Game(this.width, this.height, Phaser.AUTO, id, {
+        this.won = false;
+        this.lost = false;
+        this.game = new Phaser.Game(this.width, this.height, Phaser.AUTO, id);
+        this.game.state.add('game', {
             preload: this._preload.bind(this),
             create: this._create.bind(this),
-            render: this._render.bind(this),
             update: this._update.bind(this)
         });
+        this.game.state.add('menu', {
+            preload: this._preload.bind(this),
+            create: this._createMenu.bind(this)
+        });
+
         this.user = null;
+    }
+
+    setHighscore(highscore) {
+        this.highscore = highscore;
+        this.game.state.start("menu");
+    }
+
+    setApi(api) {
+        this.api = api;
     }
 
     setUser(user) {
         this.user = user;
     }
 
-    _render() {
+    saveHighscore() {
+        this.api.saveHighscore(this.highscore);
     }
+
+    _createMenu() {
+        if (this.won) {
+            this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
+            this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
+            this.saveHighscore();
+        }
+
+        if (this.lost) {
+            this.lostText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
+            this.lostText.setText("Du hast verloren!");
+        }
+
+        this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
+        this.menuText.setText("Beruehre den Bildschirm um zu spielen!");
+
+        this.highscoreText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((100 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
+        this.highscoreText.setText("Hoechste Punktzahl: " + this.highscore);
+        if (this.score > this.highscore) {
+            this.highscore = this.score;
+            this.highscoreText.setText("Hoechste Punktzahl: " + this.highscore + " NEUER REKORD!");
+        }
+
+        this.game.input.onDown.addOnce(() => {
+            this.game.state.start("game");
+        });
+    }
+
+    _createWin() {
+
+        this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
+        this.menuText.setText("Tap anywhere to play again");
+
+        this.game.input.onDown.addOnce(() => {
+            this.game.state.start("game");
+        });
+    }
+
 
     _preload() {
         this.game.load.atlas('breakout', 'img/breakout.png', 'img/breakout.json');
         this.game.load.image('background', 'img/background.jpg');
         this.game.load.image('enterprise', 'img/enterprise.png');
         this.game.load.bitmapFont('font1', 'font/LiquorstoreJazz.png', 'font/LiquorstoreJazz.fnt');
+        this.game.load.bitmapFont('font1white', 'font/LiquorstoreJazzWhite.png', 'font/LiquorstoreJazzWhite.fnt');
         this.game.load.spritesheet('explosion', 'img/explode.png', 128, 128);
 
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    }
-
-    setScale(img) {
-        let factorWidth = this.width / img.width;
-        img.scale.setTo(factorWidth, factorWidth);
-    }
-
-    setPlayerScale(img) {
-        let factorWidth = this.width / img.width;
-        img.scale.setTo(factorWidth / 3, factorWidth / 3);
     }
 
     isDebug() {
@@ -67,12 +119,14 @@ module.exports = class CanvasGame {
         this.background = this.game.add.tileSprite(0, 0, this.width, this.height, 'background');
 
         // player
-        this.paddle = this.game.add.sprite(this.game.world.centerX, 500, 'breakout', 'paddle_big.png');
+        this.paddle = this.game.add.sprite(this.game.world.centerX * this.scaleFactorWidth, this.height - (100 * this.scaleFactorHeight), 'breakout', 'paddle_big.png');
         this.paddle.anchor.setTo(0.5, 0.5);
         this.game.physics.enable(this.paddle, Phaser.Physics.ARCADE);
         this.paddle.body.collideWorldBounds = true;
-        this.paddle.body.bounce.set(1);
+        this.paddle.body.bounce.set(2);
         this.paddle.body.immovable = true;
+        this.paddle.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+        this.paddleInitialWidth = this.paddle.width;
 
         // explosions
         this.explosions = this.game.add.group();
@@ -90,6 +144,14 @@ module.exports = class CanvasGame {
         this.balls.setAll("anchor.y", 0.5);
         this.balls.setAll("checkWorldBounds", true);
 
+        // powerups
+        this.powerups = this.game.add.group();
+        this.powerups.enableBody = true;
+        this.powerups.physicsBodyType = Phaser.Physics.ARCADE;
+        this.powerups.setAll("anchor.x", 0.5);
+        this.powerups.setAll("anchor.y", 0.5);
+        this.powerups.setAll("checkWorldBounds", true);
+
         // bricks
         this.bricks = this.game.add.group();
         this.bricks.enableBody = true;
@@ -99,13 +161,21 @@ module.exports = class CanvasGame {
 
         for (let y = 0; y < 15; y++) {
             for (let x = 0; x < 10; x++) {
-                let brick = this.bricks.create((x * 32), (y * 22), 'breakout', 'brick_1_1.png');
+                let brick = this.bricks.create((x * 32 * this.scaleFactorWidth), (y * 22 * this.scaleFactorHeight), 'breakout', 'brick_1_1.png');
                 brick.body.bounce.set(1);
                 brick.body.immovable = true;
+                brick.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
             }
         }
 
+        // scoretext
+        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
+
         this.nextBall();
+    }
+
+    updateScore() {
+        this.scoretext.setText("Punkte: " + this.score);
     }
 
     nextBall() {
@@ -124,17 +194,32 @@ module.exports = class CanvasGame {
     }
 
     _update() {
-        this.background.tilePosition.x -= 2;
+        this.background.tilePosition.y += 2;
         this.paddle.x = this.game.input.x;
 
-        if (this.paddle.x < 24) {
-            this.paddle.x = 24;
-        } else if (this.paddle.x > this.game.width - 24) {
-            this.paddle.x = this.game.width - 24;
+        if (this.paddle.x < this.paddle.width / 2) {
+            this.paddle.x = this.paddle.width / 2;
+        } else if (this.paddle.x > this.width) {
+            this.paddle.x = this.width - (this.paddle.width / 2);
         }
 
         this.game.physics.arcade.collide(this.balls, this.paddle, this.ballHitPaddle, null, this);
         this.game.physics.arcade.collide(this.balls, this.bricks, this.ballHitBrick, null, this);
+        this.game.physics.arcade.overlap(this.powerups, this.paddle, this.powerupHitPaddle, null, this);
+
+        this.paddle.width = this.paddleInitialWidth + (this.paddleInitialWidth * (this.score / 10000));
+        this.updateScore();
+
+        if (!this.bricks.getFirstAlive(true)) {
+            this.win();
+        } else if (this.balls.getFirstExists(false)) {
+            this.loose();
+        }
+    }
+
+    powerupHitPaddle(paddle, powerup) {
+        this.paddleInitialWidth += 10 * this.scaleFactorWidth;
+        powerup.kill();
     }
 
     ballHitPaddle(paddle, ball) {
@@ -149,11 +234,19 @@ module.exports = class CanvasGame {
         if (ball.x < paddle.x) {
             //  Ball is on the left-hand side of the paddle
             diff = paddle.x - ball.x;
+            diff = diff * this.scaleFactorWidth;
+            if (diff > 10) {
+                diff = 10;
+            }
             ball.body.velocity.x = (-10 * diff);
         }
         else if (ball.x > paddle.x) {
             //  Ball is on the right-hand side of the paddle
             diff = ball.x - paddle.x;
+            diff = diff * this.scaleFactorWidth;
+            if (diff > 10) {
+                diff = 10;
+            }
             ball.body.velocity.x = (10 * diff);
         }
         else {
@@ -162,16 +255,12 @@ module.exports = class CanvasGame {
             ball.body.velocity.x = 2 + Math.random() * 8;
         }
 
-        if (ball.hits >= 5) {
+        if (ball.hits >= this.powerUpHitCount) {
+            ball.body.velocity.y = ball.body.velocity.y * 1.5;
             ball.tint = Phaser.Color.hexToColor("#ff0800").color;
-        } else if (ball.hits === 4) {
-            ball.tint = Phaser.Color.hexToColor("#ff3d36").color;
-        } else if (ball.hits === 3) {
-            ball.tint = Phaser.Color.hexToColor("#ff6e69").color;
-        } else if (ball.hits === 2) {
-            ball.tint = Phaser.Color.hexToColor("#ff8684").color;
-        } else if (ball.hits === 1) {
-            ball.tint = Phaser.Color.hexToColor("#ffb9b9").color;
+        } else if (ball.hits < this.powerUpHitCount) {
+            ball.body.velocity.y = ball.body.velocity.y * 1.1;
+            ball.tint = Phaser.Color.hexToColor("#ffcb09").color;
         }
     }
 
@@ -182,7 +271,7 @@ module.exports = class CanvasGame {
             this.score += 1000;
         }
 
-        if (ball.hits > 5) {
+        if (ball.hits >= this.powerUpHitCount) {
             this.explodeBall(ball, brick);
         }
 
@@ -203,6 +292,7 @@ module.exports = class CanvasGame {
             this.spawnBall(brick);
         }, null, this);
 
+        this.spawnPowerup(brick);
         this.destroyBall(ball);
     }
 
@@ -225,7 +315,18 @@ module.exports = class CanvasGame {
         ball.body.velocity.x = 0 + (Math.random() * 100);
         ball.animations.play('spin');
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
+        ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+    }
 
+    spawnPowerup(brick) {
+        let powerup = this.powerups.create(brick.x, brick.y, 'breakout', 'ball_2.png');
+        this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
+        powerup.body.collideWorldBounds = true;
+
+        powerup.body.velocity.y = 150 + (Math.random() * 100);
+        powerup.body.velocity.x = 0 + (Math.random() * 100);
+        powerup.tint = Phaser.Color.hexToColor("#00FF00").color;
+        powerup.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
     }
 
     destroyBall(ball) {
@@ -234,5 +335,15 @@ module.exports = class CanvasGame {
 
     destroyBrick(brick) {
         brick.kill();
+    }
+
+    win() {
+        this.won = true;
+        this.game.state.start("menu");
+    }
+
+    loose() {
+        this.lost = true;
+        this.game.state.start("menu");
     }
 }
