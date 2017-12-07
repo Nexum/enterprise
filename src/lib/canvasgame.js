@@ -20,6 +20,13 @@ module.exports = class CanvasGame {
         this.scaleFactorHeight = this.height / 568;
         this.powerUpHitCount = 3;
         this.highscore = 0;
+        this.scores = {
+            ballHitPaddle: 50,
+            ballHitBrick: 50,
+            ballLost: -100,
+            ballExplode: 1000,
+            powerUp: 300
+        };
         this.api = null;
         this.textSize = 16 * this.scaleFactorWidth;
         this.score = 0;
@@ -174,17 +181,17 @@ module.exports = class CanvasGame {
         }
 
         // scoretext
-        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
+        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - 200 - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
 
         this.nextBall();
     }
 
     updateScore() {
         let debug = `
-            Balls: ${this.counter.balls}
-            Bricks: ${this.counter.bricks}
+            Balls: ${this.balls.countLiving()}
+            Bricks: ${this.bricks.countLiving()}
         `;
-        this.scoretext.setText("Punkte: " + this.score);
+        this.scoretext.setText("Punkte: " + this.score + debug);
     }
 
     nextBall() {
@@ -204,38 +211,47 @@ module.exports = class CanvasGame {
 
     _update() {
         this.background.tilePosition.y += 2;
-        this.paddle.x = this.game.input.x;
 
-        if (this.paddle.x < this.paddle.width / 2) {
-            this.paddle.x = this.paddle.width / 2;
-        } else if (this.paddle.x > this.width) {
-            this.paddle.x = this.width - (this.paddle.width / 2);
+        if (this.paddle.width < this.width) {
+            this.paddle.x = this.game.input.x;
+            if (this.paddle.x < this.paddle.width / 2) {
+                this.paddle.x = this.paddle.width / 2;
+            } else if (this.paddle.x > this.width) {
+                this.paddle.x = this.width - (this.paddle.width / 2);
+            }
         }
+
+
+        this.paddle.width = this.paddleInitialWidth + (this.paddleInitialWidth * (this.score / 10000));
+        if (this.paddle.width > this.width) {
+            this.paddle.width = this.width;
+        }
+        //this.paddle.width = this.width;
 
         this.game.physics.arcade.collide(this.balls, this.paddle, this.ballHitPaddle, null, this);
         this.game.physics.arcade.collide(this.balls, this.bricks, this.ballHitBrick, null, this);
         this.game.physics.arcade.overlap(this.powerups, this.paddle, this.powerupHitPaddle, null, this);
 
-        this.paddle.width = this.paddleInitialWidth + (this.paddleInitialWidth * (this.score / 10000));
         this.updateScore();
 
 
-        if (this.counter.bricks <= 0) {
+        if (this.bricks.countLiving() <= 0) {
             this.win();
-        } else if (this.counter.balls <= 0 && this.counter.bricks > 0) {
+        } else if (this.balls.countLiving() <= 0 && this.bricks.countLiving() > 0) {
             this.loose();
         }
     }
 
     powerupHitPaddle(paddle, powerup) {
         this.paddleInitialWidth += 2 * this.scaleFactorWidth;
+        this.score += this.scores.powerUp;
 
         powerup.kill();
     }
 
     ballHitPaddle(paddle, ball) {
         let diff = 0;
-        this.score += 10;
+        this.score += this.scores.ballHitPaddle;
 
         if (!ball.hits) {
             ball.hits = 0;
@@ -276,7 +292,7 @@ module.exports = class CanvasGame {
     }
 
     ballHitBrick(ball, brick) {
-        this.score += 20;
+        this.score += this.scores.ballHitBrick;
 
         if (ball.hits >= this.powerUpHitCount) {
             this.explodeBall(ball, brick);
@@ -289,6 +305,7 @@ module.exports = class CanvasGame {
         let explosion = this.explosions.getFirstExists(false);
         explosion.animations.add('explosion');
         explosion.scale.setTo(0.5, 0.5);
+        this.score += this.scores.ballExplode;
 
         if (explosion) {
             explosion.reset(brick.x - (explosion.width / 2), brick.y - (explosion.height / 2));
@@ -319,7 +336,8 @@ module.exports = class CanvasGame {
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
         ball.events.onOutOfBounds.add((ball) => {
             this.counter.balls--;
-            this.score -= 5;
+            this.score += this.scores.ballLost;
+            ball.kill();
         }, this);
     }
 
