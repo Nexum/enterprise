@@ -225,7 +225,8 @@ module.exports = class CanvasGame {
     }
 
     powerupHitPaddle(paddle, powerup) {
-        this.paddleInitialWidth += 10 * this.scaleFactorWidth;
+        this.paddleInitialWidth += 2 * this.scaleFactorWidth;
+
         powerup.kill();
     }
 
@@ -274,15 +275,11 @@ module.exports = class CanvasGame {
     ballHitBrick(ball, brick) {
         this.score += 20;
 
-        if (this.bricks.countLiving() === 0) {
-            this.score += 1000;
-        }
-
         if (ball.hits >= this.powerUpHitCount) {
             this.explodeBall(ball, brick);
         }
 
-        this.spawnBall(brick);
+        this.destroyBrick(brick);
     }
 
     explodeBall(ball, brick) {
@@ -312,26 +309,19 @@ module.exports = class CanvasGame {
         ball.checkWorldBounds = true;
         ball.body.collideWorldBounds = true;
         ball.body.bounce.set(1);
-        ball.animations.add('spin', [
-            'ball_1.png',
-            'ball_2.png',
-            'ball_3.png',
-            'ball_4.png',
-            'ball_5.png'
-        ], 50, true, false);
 
         ball.body.velocity.y = (50 + (Math.random() * 100)) * this.scaleFactorHeight;
         ball.body.velocity.x = (0 + (Math.random() * 100)) * this.scaleFactorWidth;
-        ball.animations.play('spin');
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
         ball.events.onOutOfBounds.add((ball) => {
             this.counter.balls--;
+            this.score -= 5;
         }, this);
     }
 
     spawnPowerup(brick) {
-        let powerup = this.powerups.create(brick.x, brick.y, 'breakout', 'ball_2.png');
+        let powerup = this.powerups.create(brick.x, brick.y, 'breakout', 'ball_1.png');
         this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
         powerup.body.collideWorldBounds = true;
 
