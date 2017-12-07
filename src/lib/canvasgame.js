@@ -21,11 +21,11 @@ module.exports = class CanvasGame {
         this.powerUpHitCount = 3;
         this.highscore = 0;
         this.scores = {
-            ballHitPaddle: 50,
+            ballHitPaddle: 25,
             ballHitBrick: 50,
             ballLost: -100,
             ballExplode: 1000,
-            powerUp: 300
+            powerUp: 200
         };
         this.api = null;
         this.textSize = 16 * this.scaleFactorWidth;
@@ -171,12 +171,16 @@ module.exports = class CanvasGame {
             for (let x = 0; x < 10; x++) {
                 this.counter.bricks++;
                 let brick = this.bricks.create((x * 32 * this.scaleFactorWidth), (y * 22 * this.scaleFactorHeight), 'breakout', 'brick_1_1.png');
+                brick.tint = Phaser.Color.getRandomColor();
+                brick.health = this.game.rnd.between(1, 5);
+                brick.initialhealth = brick.health;
                 brick.body.bounce.set(1);
                 brick.body.immovable = true;
                 brick.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
                 brick.events.onKilled.add((brick) => {
                     this.counter.bricks--;
                 }, this);
+                this.updateBrickColor(brick);
             }
         }
 
@@ -184,6 +188,26 @@ module.exports = class CanvasGame {
         this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
 
         this.nextBall();
+    }
+
+    updateBrickColor(brick) {
+        switch (brick.health) {
+            case 5:
+                brick.tint = Phaser.Color.hexToColor("#ff0800").color;
+                break;
+            case 4:
+                brick.tint = Phaser.Color.hexToColor("#ff4c00").color;
+                break;
+            case 3:
+                brick.tint = Phaser.Color.hexToColor("#ddff05").color;
+                break;
+            case 2:
+                brick.tint = Phaser.Color.hexToColor("#00fff9").color;
+                break;
+            case 1:
+                brick.tint = Phaser.Color.hexToColor("#04ff00").color;
+                break;
+        }
     }
 
     updateScore() {
@@ -221,8 +245,22 @@ module.exports = class CanvasGame {
             }
         }
 
+        // BOT
+        /*
+        let closestPowerUp = this.powerups.getClosestTo(this.paddle);
+        if (closestPowerUp && this.balls.countLiving() > 3) {
+            this.paddle.x = closestPowerUp.x;
+        }
 
-        this.paddle.width = this.paddleInitialWidth + (this.paddleInitialWidth * (this.score / 10000));
+        let closestBall = this.balls.getClosestTo(this.paddle);
+
+        if (closestBall && closestBall.alive) {
+            this.paddle.x = closestBall.x;
+        }
+        */
+
+
+        this.paddle.width = this.paddleInitialWidth;
         if (this.paddle.width > this.width) {
             this.paddle.width = this.width;
         }
@@ -243,7 +281,7 @@ module.exports = class CanvasGame {
     }
 
     powerupHitPaddle(paddle, powerup) {
-        this.paddleInitialWidth += 2 * this.scaleFactorWidth;
+        this.paddleInitialWidth += 10 * this.scaleFactorWidth;
         this.score += this.scores.powerUp;
 
         powerup.kill();
@@ -292,13 +330,18 @@ module.exports = class CanvasGame {
     }
 
     ballHitBrick(ball, brick) {
-        this.score += this.scores.ballHitBrick;
+        brick.health--;
+
+        this.updateBrickColor(brick);
 
         if (ball.hits >= this.powerUpHitCount) {
             this.explodeBall(ball, brick);
         }
 
-        this.destroyBrick(brick);
+        if (brick.health <= 0) {
+            this.score += this.scores.ballHitBrick * brick.initialhealth;
+            this.destroyBrick(brick);
+        }
     }
 
     explodeBall(ball, brick) {
@@ -313,7 +356,10 @@ module.exports = class CanvasGame {
         }
 
         this.game.physics.arcade.overlap(explosion, this.bricks, (explosion, brick) => {
-            this.spawnBall(brick);
+            brick.health -= 2;
+            if (brick.health <= 0) {
+                this.spawnBall(brick);
+            }
         }, null, this);
 
         this.spawnPowerup(brick);
@@ -337,6 +383,7 @@ module.exports = class CanvasGame {
         ball.events.onOutOfBounds.add((ball) => {
             this.counter.balls--;
             this.score += this.scores.ballLost;
+            this.paddleInitialWidth -= 5 * this.scaleFactorWidth;
             ball.kill();
         }, this);
     }
