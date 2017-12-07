@@ -24,6 +24,10 @@ module.exports = class CanvasGame {
         this.textSize = 16 * this.scaleFactorWidth;
         this.score = 0;
         this.won = false;
+        this.counter = {
+            bricks: 0,
+            balls: 0
+        };
         this.lost = false;
         this.game = new Phaser.Game(this.width, this.height, Phaser.AUTO, id);
         this.game.state.add('game', {
@@ -83,17 +87,6 @@ module.exports = class CanvasGame {
         });
     }
 
-    _createWin() {
-
-        this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
-        this.menuText.setText("Tap anywhere to play again");
-
-        this.game.input.onDown.addOnce(() => {
-            this.game.state.start("game");
-        });
-    }
-
-
     _preload() {
         this.game.load.atlas('breakout', 'img/breakout.png', 'img/breakout.json');
         this.game.load.image('background', 'img/background.jpg');
@@ -113,7 +106,7 @@ module.exports = class CanvasGame {
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
         this.game.physics.arcade.checkCollision.down = false;
 
-        this.game.stage.backgroundColor = "#FFFFFF";
+        this.game.stage.backgroundColor = "#000000";
 
         // background
         this.background = this.game.add.tileSprite(0, 0, this.width, this.height, 'background');
@@ -143,6 +136,7 @@ module.exports = class CanvasGame {
         this.balls.setAll("anchor.x", 0.5);
         this.balls.setAll("anchor.y", 0.5);
         this.balls.setAll("checkWorldBounds", true);
+        this.balls.setAll("outOfBoundsKill", true);
 
         // powerups
         this.powerups = this.game.add.group();
@@ -151,6 +145,7 @@ module.exports = class CanvasGame {
         this.powerups.setAll("anchor.x", 0.5);
         this.powerups.setAll("anchor.y", 0.5);
         this.powerups.setAll("checkWorldBounds", true);
+        this.powerups.setAll("outOfBoundsKill", true);
 
         // bricks
         this.bricks = this.game.add.group();
@@ -159,23 +154,34 @@ module.exports = class CanvasGame {
         this.bricks.setAll("anchor.y", 0.5);
         this.bricks.physicsBodyType = Phaser.Physics.ARCADE;
 
+        this.counter.bricks = 0;
+        this.counter.balls = 0;
+
         for (let y = 0; y < 15; y++) {
             for (let x = 0; x < 10; x++) {
+                this.counter.bricks++;
                 let brick = this.bricks.create((x * 32 * this.scaleFactorWidth), (y * 22 * this.scaleFactorHeight), 'breakout', 'brick_1_1.png');
                 brick.body.bounce.set(1);
                 brick.body.immovable = true;
                 brick.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+                brick.events.onKilled.add((brick) => {
+                    this.counter.bricks--;
+                }, this);
             }
         }
 
         // scoretext
-        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
+        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - 200 - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
 
         this.nextBall();
     }
 
     updateScore() {
-        this.scoretext.setText("Punkte: " + this.score);
+        let debug = `
+            Balls: ${this.counter.balls}
+            Bricks: ${this.counter.bricks}
+        `;
+        this.scoretext.setText("Punkte: " + this.score + "\n" + debug);
     }
 
     nextBall() {
@@ -210,9 +216,10 @@ module.exports = class CanvasGame {
         this.paddle.width = this.paddleInitialWidth + (this.paddleInitialWidth * (this.score / 10000));
         this.updateScore();
 
-        if (!this.bricks.getFirstAlive(true)) {
+
+        if (this.counter.bricks <= 0) {
             this.win();
-        } else if (this.bricks.getFirstAlive(true) && !this.balls.getFirstExists(true)) {
+        } else if (this.counter.balls <= 0 && this.counter.bricks > 0) {
             this.loose();
         }
     }
@@ -298,9 +305,11 @@ module.exports = class CanvasGame {
 
     spawnBall(brick) {
         let ball = this.balls.create(brick.x, brick.y, 'breakout', 'ball_1.png');
+        this.counter.balls++;
         this.destroyBrick(brick);
 
         this.game.physics.enable(ball, Phaser.Physics.ARCADE);
+        ball.checkWorldBounds = true;
         ball.body.collideWorldBounds = true;
         ball.body.bounce.set(1);
         ball.animations.add('spin', [
@@ -316,6 +325,9 @@ module.exports = class CanvasGame {
         ball.animations.play('spin');
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+        ball.events.onOutOfBounds.add((ball) => {
+            this.counter.balls--;
+        }, this);
     }
 
     spawnPowerup(brick) {
