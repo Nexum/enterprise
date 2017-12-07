@@ -181,7 +181,7 @@ module.exports = class CanvasGame {
         }
 
         // scoretext
-        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - 200 - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
+        this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height -  (20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
 
         this.nextBall();
     }
@@ -191,7 +191,7 @@ module.exports = class CanvasGame {
             Balls: ${this.balls.countLiving()}
             Bricks: ${this.bricks.countLiving()}
         `;
-        this.scoretext.setText("Punkte: " + this.score + debug);
+        this.scoretext.setText("Punkte: " + this.score);
     }
 
     nextBall() {
