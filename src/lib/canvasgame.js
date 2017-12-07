@@ -156,6 +156,7 @@ module.exports = class CanvasGame {
 
         this.counter.bricks = 0;
         this.counter.balls = 0;
+        this.score = 0;
 
         for (let y = 0; y < 15; y++) {
             for (let x = 0; x < 10; x++) {
