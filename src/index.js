@@ -27,4 +27,5 @@ Api.getHighscore().then((data) => {
     if (debug) {
         game.setHighscore(3000);
     }
+    game.setHighscore(0);
 });
