@@ -35,13 +35,13 @@ module.exports = class CanvasGame {
             preload: this._preload.bind(this),
             create: this._createMenu.bind(this)
         });
+        this.game.state.start("menu");
 
         this.user = null;
     }
 
     setHighscore(highscore) {
         this.highscore = highscore;
-        this.game.state.start("menu");
     }
 
     setApi(api) {
@@ -212,7 +212,7 @@ module.exports = class CanvasGame {
 
         if (!this.bricks.getFirstAlive(true)) {
             this.win();
-        } else if (this.balls.getFirstExists(false)) {
+        } else if (this.bricks.getFirstAlive(true) && !this.balls.getFirstExists(true)) {
             this.loose();
         }
     }
