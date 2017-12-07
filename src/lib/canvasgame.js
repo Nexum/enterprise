@@ -282,6 +282,9 @@ module.exports = class CanvasGame {
 
     powerupHitPaddle(paddle, powerup) {
         this.paddleInitialWidth += 10 * this.scaleFactorWidth;
+        if (this.paddleInitialWidth > this.width / 2) {
+            this.paddleInitialWidth = this.width / 2;
+        }
         this.score += this.scores.powerUp;
 
         powerup.kill();
@@ -300,8 +303,8 @@ module.exports = class CanvasGame {
             //  Ball is on the left-hand side of the paddle
             diff = paddle.x - ball.x;
             diff = diff * this.scaleFactorWidth;
-            if (diff > 10) {
-                diff = 10;
+            if (diff > 45) {
+                diff = 45;
             }
             ball.body.velocity.x = (-10 * diff);
         }
@@ -309,8 +312,8 @@ module.exports = class CanvasGame {
             //  Ball is on the right-hand side of the paddle
             diff = ball.x - paddle.x;
             diff = diff * this.scaleFactorWidth;
-            if (diff > 10) {
-                diff = 10;
+            if (diff > 45) {
+                diff = 45;
             }
             ball.body.velocity.x = (10 * diff);
         }
