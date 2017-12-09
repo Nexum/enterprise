@@ -92,8 +92,6 @@ module.exports = class CanvasGame {
         let font1 = "font1";
         let font1white = "font1white";
 
-        //this.won = true;
-
         /*
         this.beginText = this.game.add.bitmapText(10 * this.scaleFactorWidth, ((10 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize / 2);
         this.beginText.setText(`${this.width}x${this.height} ${this.scaleFactorWidth} ${this.scaleFactorHeight}`);
