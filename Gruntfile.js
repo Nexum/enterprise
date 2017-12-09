@@ -97,9 +97,15 @@ module.exports = function (grunt) {
         'gh-pages'
     ]);
 
+    grunt.registerTask('build', [
+        'webpack',
+        'sass',
+        'uglify'
+    ]);
+
     grunt.registerTask('default', [
         'webpack',
         'sass',
-        'uglify',
+        'uglify'
     ]);
 };
