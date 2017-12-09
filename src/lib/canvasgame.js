@@ -21,6 +21,7 @@ module.exports = class CanvasGame {
         this.width = window.innerWidth * window.devicePixelRatio;
         this.scaleFactorWidth = this.width / 320;
         this.scaleFactorHeight = this.height / 568;
+        this.scaleFactorHeight = this.scaleFactorWidth;
         this.powerUpHitCount = 3;
         this.level = 1;
         this.highscore = 0;
