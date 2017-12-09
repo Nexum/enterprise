@@ -19,7 +19,6 @@ module.exports = class CanvasGame {
 
         this.height = window.innerHeight * window.devicePixelRatio;
         this.width = window.innerWidth * window.devicePixelRatio;
-        this.BOTMODE = false;
         this.scaleFactorWidth = this.width / 320;
         this.scaleFactorHeight = this.height / 568;
         this.powerUpHitCount = 3;
@@ -65,10 +64,6 @@ module.exports = class CanvasGame {
     }
 
     saveHighscore() {
-        if (this.BOTMODE) {
-            return;
-        }
-
         this.api.saveHighscore(this.highscore);
     }
 
