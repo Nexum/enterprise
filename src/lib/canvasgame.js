@@ -124,6 +124,11 @@ module.exports = class CanvasGame {
             this.winTextPicard.anchor.setTo(0.5, 0.5);
             this.winTextPicard.align = 'center';
 
+            this.winTextPicard2 = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1, "", this.textSize);
+            this.winTextPicard2.setText("Picard an Geschaeftsleitung,\nwir stecken fest!");
+            this.winTextPicard2.anchor.setTo(0.5, 0.5);
+            this.winTextPicard2.align = 'center';
+
             this.game.add.tween(this.winImage).to({alpha: 0.3}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
             this.highscoreText.alpha = 0;
             this.game.add.tween(this.highscoreText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
@@ -131,6 +136,10 @@ module.exports = class CanvasGame {
             this.game.add.tween(this.menuText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
             this.winText.alpha = 0;
             this.game.add.tween(this.winText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.winTextPicard.alpha = 0;
+            this.game.add.tween(this.winTextPicard).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.winTextPicard.alpha = 1;
+            this.game.add.tween(this.winTextPicard2).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
             this.saveHighscore();
         } else {
             this.highscoreText.alpha = 1;
@@ -315,10 +324,15 @@ module.exports = class CanvasGame {
 
         this.updateScore();
 
-        if (this.bricks.countLiving() <= 0) {
-            this.win();
-        } else if (this.balls.countLiving() <= 0 && this.bricks.countLiving() > 0) {
-            this.loose();
+        if (!this.winLooseCheck) {
+            this.winLooseCheck = setTimeout(() => {
+                if (this.bricks.countLiving() <= 0) {
+                    this.win();
+                } else if (this.balls.countLiving() <= 0 && this.bricks.countLiving() > 0) {
+                    this.loose();
+                }
+                this.winLooseCheck = null;
+            }, 500)
         }
     }
 
@@ -398,10 +412,7 @@ module.exports = class CanvasGame {
         }
 
         this.game.physics.arcade.overlap(explosion, this.bricks, (explosion, brick) => {
-            brick.health = 0;
-            if (brick.health <= 0) {
-                this.spawnBall(brick);
-            }
+            this.spawnBall(brick);
         }, null, this);
 
         this.spawnPowerup(brick);
