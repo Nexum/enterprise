@@ -17,8 +17,8 @@ module.exports = class CanvasGame {
         this.created = false;
         this.createdMenu = false;
 
-        this.height = window.innerHeight * window.devicePixelRatio;
-        this.width = window.innerWidth * window.devicePixelRatio;
+        this.height = window.innerHeight;
+        this.width = window.innerWidth;
 
         if (this.height < this.width) {
             let width = this.width;
@@ -91,8 +91,10 @@ module.exports = class CanvasGame {
         let font1 = "font1";
         let font1white = "font1white";
 
+        /*
         this.beginText = this.game.add.bitmapText(10 * this.scaleFactorWidth, ((10 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize / 2);
         this.beginText.setText(`${this.width}x${this.height} ${this.scaleFactorWidth} ${this.scaleFactorHeight}`);
+        */
 
         if (!this.lost && !this.won) {
             this.beginText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
@@ -188,10 +190,22 @@ module.exports = class CanvasGame {
         this.game.load.image("scribble", "img/vA/scribble.png");
         this.game.load.image("target", "img/vA/target.png");
 
-        this.game.load.audio('theme', 'sounds/theme.mp3');
-        this.game.load.audio('bounce', 'sounds/bounce.wav');
-        this.game.load.audio('explosion', 'sounds/explosion.wav');
-        this.game.load.audio('lostball', 'sounds/lostball.mp3');
+        this.game.load.audio('theme', [
+            'sounds/theme.mp3',
+            'sounds/theme.aiff'
+        ]);
+        this.game.load.audio('bounce', [
+            'sounds/bounce.wav',
+            'sounds/bounce.aiff'
+        ]);
+        this.game.load.audio('explosion', [
+            'sounds/explosion.wav',
+            'sounds/explosion.aiff'
+        ]);
+        this.game.load.audio('lostball', [
+            'sounds/lostball.mp3',
+            'sounds/lostball.aiff'
+        ]);
 
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.game.scale.forceOrientation(false, true);
