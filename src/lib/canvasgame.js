@@ -16,6 +16,7 @@ module.exports = class CanvasGame {
     constructor(id) {
         this.created = false;
         this.createdMenu = false;
+        this.debugging = false; //window.location.hostname === "localhost";
 
         this.height = window.innerHeight;
         this.width = window.innerWidth;
@@ -59,7 +60,7 @@ module.exports = class CanvasGame {
             preload: this._preload.bind(this),
             create: this._createWarning.bind(this)
         });
-        this.game.state.start("menu");
+        this.game.state.start("game");
 
         this.user = null;
     }
@@ -91,6 +92,9 @@ module.exports = class CanvasGame {
         this.game.stage.backgroundColor = "#000000";
         let font1 = "font1";
         let font1white = "font1white";
+
+        //this.won = true;
+        //this.lost = true;
 
         /*
         this.beginText = this.game.add.bitmapText(10 * this.scaleFactorWidth, ((10 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize / 2);
@@ -128,40 +132,28 @@ module.exports = class CanvasGame {
         }
 
         if (this.won) {
-            this.winImage = this.game.add.sprite(0, 0, 'final_image');
+            this.winImage = this.game.add.sprite(0, 0, 'final_image_kimbo');
             this.winImage.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
-            this.game.physics.enable(this.winImage, Phaser.Physics.ARCADE);
-            this.winImage.body.collideWorldBounds = true;
-            this.winImage.body.bounce.set(2);
-            this.winImage.body.immovable = true;
             this.winImage.alpha = 1;
+            this.winImage2 = this.game.add.sprite(0, 0, 'final_image_picard');
+            this.winImage2.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+            this.winImage2.alpha = 0;
             this.menuBackground.alpha = 0;
 
-            this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
+            this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((200 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
+            this.highscoreText.y = ((280 * this.scaleFactorWidth) + this.textSize);
             this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
-
-            this.winTextPicard = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 1.5);
-            this.winTextPicard.setText("Picard an Geschaeftsleitung,\nwir stecken fest!");
-            this.winTextPicard.anchor.setTo(0.5, 0.5);
-            this.winTextPicard.align = 'center';
-
-            this.winTextPicard2 = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (80 * this.scaleFactorWidth) + this.textSize), font1, "", this.textSize * 2);
-            this.winTextPicard2.setText("Kimbo neeiiiiiiin\n AUS!!!");
-            this.winTextPicard2.anchor.setTo(0.5, 0.5);
-            this.winTextPicard2.align = 'center';
 
             let winDelay = 3000;
             this.game.add.tween(this.winImage).to({alpha: 0.3}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.highscoreText.alpha = 0;
             this.game.add.tween(this.highscoreText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
+            this.game.add.tween(this.winImage).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
+            this.game.add.tween(this.winImage2).to({alpha: 0.5}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.menuText.alpha = 0;
             this.game.add.tween(this.menuText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.winText.alpha = 0;
             this.game.add.tween(this.winText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
-            this.winTextPicard.alpha = 0;
-            this.game.add.tween(this.winTextPicard).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
-            this.winTextPicard2.alpha = 1;
-            this.game.add.tween(this.winTextPicard2).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.saveHighscore();
         } else {
             this.highscoreText.alpha = 1;
@@ -178,6 +170,7 @@ module.exports = class CanvasGame {
         this.game.load.spritesheet('explosion', 'img/explode.png', 128, 128);
         this.game.load.image("background", "img/background.jpg");
         this.game.load.image("playportrait", "img/playportrait.png");
+        this.game.load.image("enterprise", "img/vA/enterprise.png");
 
         this.game.load.spritesheet('bricks', 'img/vA/bricks.png', 32, 16);
         this.game.load.image("blocker", "img/vA/blocker.png");
@@ -188,6 +181,8 @@ module.exports = class CanvasGame {
         this.game.load.image("critical", "img/vA/critical.png");
         this.game.load.image("dog", "img/vA/dog.png");
         this.game.load.image("final_image", "img/vA/final_image.png");
+        this.game.load.image("final_image_kimbo", "img/vA/final_image_kimbo.png");
+        this.game.load.image("final_image_picard", "img/vA/final_image_picard.png");
         this.game.load.image("normal", "img/vA/normal.png");
         this.game.load.image("scribble", "img/vA/scribble.png");
         this.game.load.image("target", "img/vA/target.png");
@@ -235,6 +230,11 @@ module.exports = class CanvasGame {
 
         // background
         this.background = this.game.add.tileSprite(0, 0, this.width, this.height, 'background');
+
+        // enterprise
+
+        this.enterprise = this.game.add.sprite(this.width, 0, 'enterprise');
+        this.enterprise.anchor.setTo(0.5, 0.5);
 
         // dog
         this.dog = this.game.add.sprite(this.game.world.centerX * this.scaleFactorWidth, this.height - (100 * this.scaleFactorHeight), 'dog');
@@ -313,6 +313,10 @@ module.exports = class CanvasGame {
         this.lostball = this.game.add.audio('lostball');
         this.lostball.speed = 3;
 
+        this.enterprise1();
+        this.enterprise.sendToBack();
+        this.background.sendToBack();
+
         this.nextBall();
     }
 
@@ -339,7 +343,46 @@ module.exports = class CanvasGame {
         });
     }
 
+    checkEnterprise() {
+        if (!this.enterpriseRunning) {
+            this.enterpriseRunning = true;
+            let time = this.game.rnd.between(1000, 1500);
+            let rnd = this.game.rnd.between(1, 6);
+            setTimeout(() => {
+                this.enterpriseRunning = false;
+            }, time);
+            //rnd = 2;
+            switch (rnd) {
+                case 1:
+                    this.enterprise1(time);
+                    break;
+                case 2:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
+    enterprise1(time) {
+        this.enterprise.x = this.width;
+        this.enterprise.y = 0;
+        this.enterprise.scale.x *= -1;
+        this.enterprise.scale.y *= -1;
+        this.enterprise.scale.set(0.1 * this.scaleFactorWidth, 0.1 * this.scaleFactorHeight);
+        this.game.add.tween(this.enterprise.scale).to({
+            x: .8 * this.scaleFactorWidth,
+            y: .8 * this.scaleFactorHeight
+        }, time, Phaser.Easing.Linear.None, true, 0, 0, false);
+        this.game.add.tween(this.enterprise).to({
+            x: -400 * this.scaleFactorWidth,
+            y: 300 * this.scaleFactorHeight
+        }, time, Phaser.Easing.Linear.None, true, 0, 0, false);
+    }
+
     _update() {
+        this.checkEnterprise();
         this.background.tilePosition.y += 2;
 
         this.dog.x = this.paddle.x;
@@ -503,11 +546,17 @@ module.exports = class CanvasGame {
     }
 
     win() {
+        if (this.debugging) {
+            return;
+        }
         this.won = true;
         this.game.state.start("menu");
     }
 
     loose() {
+        if (this.debugging) {
+            return;
+        }
         this.lost = true;
         this.game.state.start("menu");
     }
