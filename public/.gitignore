@@ -2,6 +2,7 @@
 ### PROJECT ########
 ####################
 
+.grunt
 public/css/styles.css
 public/css/styles.css.map
 public/js/bundle.js
