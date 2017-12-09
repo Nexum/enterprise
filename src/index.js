@@ -1,6 +1,30 @@
 const CanvasGame = require("lib/canvasgame");
 const apiClass = require("adventskalender-js-api");
 
+/*
+const apiClass = class home {
+    init() {
+
+    }
+
+    saveHighscore() {
+
+    }
+
+    getUser() {
+        return new Promise(()=> {
+        }, ()=> {
+        });
+    }
+
+    getHighscore() {
+        return new Promise(()=> {
+        }, ()=> {
+        });
+    }
+}
+*/
+
 var Api = new apiClass();
 Api.init(window, "Enterprise");
 var debug = location.hostname === "localhost";

@@ -14,6 +14,9 @@ window.Phaser = require('phaser/build/custom/phaser-split');
 module.exports = class CanvasGame {
 
     constructor(id) {
+        this.created = false;
+        this.createdMenu = false;
+
         this.height = window.innerHeight * window.devicePixelRatio;
         this.width = window.innerWidth * window.devicePixelRatio;
         this.BOTMODE = false;
@@ -33,10 +36,6 @@ module.exports = class CanvasGame {
         this.textSize = 16 * this.scaleFactorWidth;
         this.score = 0;
         this.won = false;
-        this.counter = {
-            bricks: 0,
-            balls: 0
-        };
         this.lost = false;
         this.game = new Phaser.Game(this.width, this.height, Phaser.AUTO, id);
         this.game.state.add('game', {
@@ -74,36 +73,67 @@ module.exports = class CanvasGame {
     }
 
     _createMenu() {
+        let font1 = "font1";
+        let font1white = "font1white";
 
-        if (this.won) {
-            this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
-            this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
-            this.saveHighscore();
+        if (!this.lost && !this.won) {
+            this.beginText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
+            this.beginText.setText("Los geht's!\nPunkte: " + this.score);
         }
 
         if (this.lost) {
-            this.lostText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize * 2);
+            this.lostText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
             this.lostText.setText("Du hast verloren!\nPunkte: " + this.score);
             this.saveHighscore();
         }
 
-        this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
+        this.menuText = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize);
         this.menuText.setText("Beruehre den Bildschirm um zu spielen!");
 
-        this.BOTMODE = false;
-        this.menuTextHidden = this.game.add.bitmapText(20 * this.scaleFactorWidth, 0 + this.textSize, 'font1', "", this.textSize);
-        this.menuTextHidden.setText("ICH BIN EIN BOT!");
-        this.menuTextHidden.inputEnabled = true;
-        this.menuTextHidden.events.onInputDown.addOnce(() => {
-            this.BOTMODE = true;
-            this.game.state.start("game");
-        }, this);
+        this.menuBackground = this.game.add.sprite(280 * this.scaleFactorWidth, 32 * this.scaleFactorHeight, 'dog');
+        this.menuBackground.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+        this.menuBackground.anchor.setTo(0.5, 0.5);
+        this.game.physics.enable(this.menuBackground, Phaser.Physics.ARCADE);
+        this.menuBackground.body.collideWorldBounds = true;
+        this.menuBackground.body.bounce.set(2);
+        this.menuBackground.body.immovable = true;
+        this.menuBackground.alpha = 1;
 
-        this.highscoreText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((100 * this.scaleFactorWidth) + this.textSize), 'font1white', "", this.textSize);
+        this.highscoreText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((100 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize);
         this.highscoreText.setText("Hoechste Punktzahl: " + this.highscore);
         if (this.score > this.highscore) {
             this.highscore = this.score;
             this.highscoreText.setText("Hoechste Punktzahl: " + this.highscore + " NEUER REKORD!");
+        }
+
+        if (this.won) {
+            this.winImage = this.game.add.sprite(0, 0, 'final_image');
+            this.winImage.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+            this.game.physics.enable(this.winImage, Phaser.Physics.ARCADE);
+            this.winImage.body.collideWorldBounds = true;
+            this.winImage.body.bounce.set(2);
+            this.winImage.body.immovable = true;
+            this.winImage.alpha = 1;
+            this.menuBackground.alpha = 0;
+
+            this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
+            this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
+
+            this.winTextPicard = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize);
+            this.winTextPicard.setText("Picard an Geschaeftsleitung,\nwir stecken fest!");
+            this.winTextPicard.anchor.setTo(0.5, 0.5);
+            this.winTextPicard.align = 'center';
+
+            this.game.add.tween(this.winImage).to({alpha: 0.3}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.highscoreText.alpha = 0;
+            this.game.add.tween(this.highscoreText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.menuText.alpha = 0;
+            this.game.add.tween(this.menuText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.winText.alpha = 0;
+            this.game.add.tween(this.winText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.saveHighscore();
+        } else {
+            this.highscoreText.alpha = 1;
         }
 
         this.game.input.onDown.addOnce(() => {
@@ -112,12 +142,28 @@ module.exports = class CanvasGame {
     }
 
     _preload() {
-        this.game.load.atlas('breakout', 'img/breakout.png', 'img/breakout.json');
-        this.game.load.image('background', 'img/background.jpg');
-        this.game.load.image('enterprise', 'img/enterprise.png');
         this.game.load.bitmapFont('font1', 'font/LiquorstoreJazz.png', 'font/LiquorstoreJazz.fnt');
         this.game.load.bitmapFont('font1white', 'font/LiquorstoreJazzWhite.png', 'font/LiquorstoreJazzWhite.fnt');
         this.game.load.spritesheet('explosion', 'img/explode.png', 128, 128);
+        this.game.load.image("background", "img/background.jpg");
+
+        this.game.load.spritesheet('bricks', 'img/vA/bricks.png', 32, 16);
+        this.game.load.image("blocker", "img/vA/blocker.png");
+        this.game.load.image("bone", "img/vA/bone.png");
+        this.game.load.image("bone_left", "img/vA/bone_left.png");
+        this.game.load.image("bone_main", "img/vA/bone_main.png");
+        this.game.load.image("bone_right", "img/vA/bone_right.png");
+        this.game.load.image("critical", "img/vA/critical.png");
+        this.game.load.image("dog", "img/vA/dog.png");
+        this.game.load.image("final_image", "img/vA/final_image.png");
+        this.game.load.image("normal", "img/vA/normal.png");
+        this.game.load.image("scribble", "img/vA/scribble.png");
+        this.game.load.image("target", "img/vA/target.png");
+
+        this.game.load.audio('theme', 'sounds/theme.mp3');
+        this.game.load.audio('bounce', 'sounds/bounce.wav');
+        this.game.load.audio('explosion', 'sounds/explosion.wav');
+        this.game.load.audio('lostball', 'sounds/lostball.mp3');
 
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     }
@@ -127,8 +173,6 @@ module.exports = class CanvasGame {
     }
 
     _create() {
-        this.counter.bricks = 0;
-        this.counter.balls = 0;
         this.score = 0;
         this.won = false;
         this.lost = false;
@@ -141,8 +185,17 @@ module.exports = class CanvasGame {
         // background
         this.background = this.game.add.tileSprite(0, 0, this.width, this.height, 'background');
 
+        // dog
+        this.dog = this.game.add.sprite(this.game.world.centerX * this.scaleFactorWidth, this.height - (100 * this.scaleFactorHeight), 'dog');
+        this.dog.anchor.setTo(0.5, 0.5);
+        this.game.physics.enable(this.dog, Phaser.Physics.ARCADE);
+        this.dog.body.collideWorldBounds = true;
+        this.dog.body.bounce.set(2);
+        this.dog.body.immovable = true;
+        this.dog.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
+
         // player
-        this.paddle = this.game.add.sprite(this.game.world.centerX * this.scaleFactorWidth, this.height - (100 * this.scaleFactorHeight), 'breakout', 'paddle_big.png');
+        this.paddle = this.game.add.sprite(this.game.world.centerX * this.scaleFactorWidth, this.height - (100 * this.scaleFactorHeight), 'bone');
         this.paddle.anchor.setTo(0.5, 0.5);
         this.game.physics.enable(this.paddle, Phaser.Physics.ARCADE);
         this.paddle.body.collideWorldBounds = true;
@@ -186,45 +239,30 @@ module.exports = class CanvasGame {
 
         for (let y = 0; y < 15; y++) {
             for (let x = 0; x < 10; x++) {
-                this.counter.bricks++;
-                let brick = this.bricks.create((x * 32 * this.scaleFactorWidth), (y * 22 * this.scaleFactorHeight), 'breakout', 'brick_1_1.png');
-                brick.tint = Phaser.Color.getRandomColor();
-                brick.health = this.game.rnd.between(1, 5);
+                let health = this.game.rnd.between(1, 3);
+                let brick = this.bricks.create((x * 32 * this.scaleFactorWidth), (y * 22 * this.scaleFactorHeight), 'bricks');
+                brick.frame = health;
+                brick.health = health;
                 brick.initialhealth = brick.health;
                 brick.body.bounce.set(1);
                 brick.body.immovable = true;
                 brick.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
-                brick.events.onKilled.add((brick) => {
-                    this.counter.bricks--;
-                }, this);
-                this.updateBrickColor(brick);
             }
         }
 
         // scoretext
         this.scoretext = this.game.add.bitmapText(20 * this.scaleFactorWidth, this.height - ((20 * this.scaleFactorWidth) + this.textSize), 'font1white', 'Punkte: ' + this.score, this.textSize);
 
-        this.nextBall();
-    }
-
-    updateBrickColor(brick) {
-        switch (brick.health) {
-            case 5:
-                brick.tint = Phaser.Color.hexToColor("#ff0800").color;
-                break;
-            case 4:
-                brick.tint = Phaser.Color.hexToColor("#ff4c00").color;
-                break;
-            case 3:
-                brick.tint = Phaser.Color.hexToColor("#ddff05").color;
-                break;
-            case 2:
-                brick.tint = Phaser.Color.hexToColor("#00fff9").color;
-                break;
-            case 1:
-                brick.tint = Phaser.Color.hexToColor("#04ff00").color;
-                break;
+        if (!this.theme) {
+            this.theme = this.game.add.audio('theme');
+            this.theme.play();
         }
+        this.bounce = this.game.add.audio('bounce');
+        this.explosion = this.game.add.audio('explosion');
+        this.lostball = this.game.add.audio('lostball');
+        this.lostball.speed = 3;
+
+        this.nextBall();
     }
 
     updateScore() {
@@ -253,40 +291,29 @@ module.exports = class CanvasGame {
     _update() {
         this.background.tilePosition.y += 2;
 
-        if (this.paddle.width < this.width) {
-            this.paddle.x = this.game.input.x;
-            if (this.paddle.x < this.paddle.width / 2) {
-                this.paddle.x = this.paddle.width / 2;
-            } else if (this.paddle.x > this.width) {
-                this.paddle.x = this.width - (this.paddle.width / 2);
-            }
+        this.dog.x = this.paddle.x;
+        this.dog.y = this.paddle.y + (36 * this.scaleFactorWidth);
+
+        if (this.paddle.width > this.width / 2) {
+            this.paddle.width = this.width / 2;
         }
 
-        // BOT
-
-        if (this.BOTMODE) {
-            let closestPowerUp = this.powerups.getClosestTo(this.paddle);
-            if (closestPowerUp && this.balls.countLiving() > 3) {
-                this.paddle.x = closestPowerUp.x;
-            }
-
-            let closestBall = this.balls.getClosestTo({
-                x: 0,
-                y: this.height
-            });
-
-            if (closestBall && closestBall.alive) {
-                this.paddle.x = closestBall.x + this.game.rnd.between((this.paddle.width / 2) * -1, this.paddle.width / 2);
-            }
+        if (this.paddle.width < this.paddleInitialWidth) {
+            this.paddle.width = this.paddleInitialWidth;
         }
 
+        this.paddle.x = this.game.input.x;
+        if (this.paddle.x < this.paddle.width / 2) {
+            this.paddle.x = this.paddle.width / 2;
+        } else if (this.paddle.x > this.width) {
+            this.paddle.x = this.width - (this.paddle.width / 2);
+        }
 
         this.game.physics.arcade.collide(this.balls, this.paddle, this.ballHitPaddle, null, this);
         this.game.physics.arcade.collide(this.balls, this.bricks, this.ballHitBrick, null, this);
         this.game.physics.arcade.overlap(this.powerups, this.paddle, this.powerupHitPaddle, null, this);
 
         this.updateScore();
-
 
         if (this.bricks.countLiving() <= 0) {
             this.win();
@@ -297,19 +324,12 @@ module.exports = class CanvasGame {
 
     powerupHitPaddle(paddle, powerup) {
         this.paddle.width += 10 * this.scaleFactorWidth;
-        if (this.paddleInitialWidth > this.width / 2) {
-            this.paddleInitialWidth = this.width / 2;
-        }
-        if (this.paddle.width < this.paddleInitialWidth) {
-            this.paddle.width = this.paddleInitialWidth;
-        }
-
         this.score += this.scores.powerUp;
-
         powerup.kill();
     }
 
     ballHitPaddle(paddle, ball) {
+        this.bounce.play();
         let diff = 0;
         this.score += this.scores.ballHitPaddle;
 
@@ -353,8 +373,7 @@ module.exports = class CanvasGame {
 
     ballHitBrick(ball, brick) {
         brick.health--;
-
-        this.updateBrickColor(brick);
+        brick.frame = brick.health;
 
         if (ball.hits >= this.powerUpHitCount) {
             this.explodeBall(ball, brick);
@@ -367,9 +386,10 @@ module.exports = class CanvasGame {
     }
 
     explodeBall(ball, brick) {
+        this.explosion.play();
         let explosion = this.explosions.getFirstExists(false);
         explosion.animations.add('explosion');
-        explosion.scale.setTo(0.5, 0.5);
+        explosion.scale.setTo(0.5 * this.scaleFactorWidth, 0.5 * this.scaleFactorHeight);
         this.score += this.scores.ballExplode;
 
         if (explosion) {
@@ -389,8 +409,7 @@ module.exports = class CanvasGame {
     }
 
     spawnBall(brick) {
-        let ball = this.balls.create(brick.x, brick.y, 'breakout', 'ball_1.png');
-        this.counter.balls++;
+        let ball = this.balls.create(brick.x, brick.y, 'target');
         this.destroyBrick(brick);
 
         this.game.physics.enable(ball, Phaser.Physics.ARCADE);
@@ -403,15 +422,15 @@ module.exports = class CanvasGame {
         ball.tint = Phaser.Color.hexToColor("#fffbff").color;
         ball.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
         ball.events.onOutOfBounds.add((ball) => {
-            this.counter.balls--;
+            this.lostball.play();
             this.score += this.scores.ballLost;
-            this.paddleInitialWidth -= 5 * this.scaleFactorWidth;
+            this.paddle.width -= 5 * this.scaleFactorWidth;
             ball.kill();
         }, this);
     }
 
     spawnPowerup(brick) {
-        let powerup = this.powerups.create(brick.x, brick.y, 'breakout', 'ball_1.png');
+        let powerup = this.powerups.create(brick.x, brick.y, 'target');
         this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
         powerup.body.collideWorldBounds = true;
 
