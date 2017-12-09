@@ -33,10 +33,11 @@ module.exports = class CanvasGame {
         this.level = 1;
         this.highscore = 0;
         this.scores = {
-            ballHitPaddle: 25,
-            ballHitBrick: 50,
+            ballHitPaddle: 0,
+            ballHitBrick: 0,
+            brickKill: 100,
             ballLost: -100,
-            ballExplode: 1000,
+            ballExplode: 0,
             powerUp: 200
         };
         this.api = null;
@@ -91,6 +92,8 @@ module.exports = class CanvasGame {
         let font1 = "font1";
         let font1white = "font1white";
 
+        this.won = true;
+
         /*
         this.beginText = this.game.add.bitmapText(10 * this.scaleFactorWidth, ((10 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize / 2);
         this.beginText.setText(`${this.width}x${this.height} ${this.scaleFactorWidth} ${this.scaleFactorHeight}`);
@@ -139,27 +142,28 @@ module.exports = class CanvasGame {
             this.winText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
             this.winText.setText("Du hast gewonnen!\nPunkte: " + this.score);
 
-            this.winTextPicard = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize);
+            this.winTextPicard = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 1.5);
             this.winTextPicard.setText("Picard an Geschaeftsleitung,\nwir stecken fest!");
             this.winTextPicard.anchor.setTo(0.5, 0.5);
             this.winTextPicard.align = 'center';
 
-            this.winTextPicard2 = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (110 * this.scaleFactorWidth) + this.textSize), font1, "", this.textSize);
-            this.winTextPicard2.setText("Picard an Geschaeftsleitung,\nwir stecken fest!");
+            this.winTextPicard2 = this.game.add.bitmapText(160 * this.scaleFactorWidth, (this.height - (80 * this.scaleFactorWidth) + this.textSize), font1, "", this.textSize * 2);
+            this.winTextPicard2.setText("Kimbo neeiiiiiiin\n AUS!!!");
             this.winTextPicard2.anchor.setTo(0.5, 0.5);
             this.winTextPicard2.align = 'center';
 
-            this.game.add.tween(this.winImage).to({alpha: 0.3}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            let winDelay = 3000;
+            this.game.add.tween(this.winImage).to({alpha: 0.3}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.highscoreText.alpha = 0;
-            this.game.add.tween(this.highscoreText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.game.add.tween(this.highscoreText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.menuText.alpha = 0;
-            this.game.add.tween(this.menuText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.game.add.tween(this.menuText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.winText.alpha = 0;
-            this.game.add.tween(this.winText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.game.add.tween(this.winText).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.winTextPicard.alpha = 0;
-            this.game.add.tween(this.winTextPicard).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
-            this.winTextPicard.alpha = 1;
-            this.game.add.tween(this.winTextPicard2).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true, 2000, 0, false);
+            this.game.add.tween(this.winTextPicard).to({alpha: 1}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
+            this.winTextPicard2.alpha = 1;
+            this.game.add.tween(this.winTextPicard2).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true, winDelay, 0, false);
             this.saveHighscore();
         } else {
             this.highscoreText.alpha = 1;
@@ -361,6 +365,7 @@ module.exports = class CanvasGame {
         this.game.physics.arcade.collide(this.balls, this.paddle, this.ballHitPaddle, null, this);
         this.game.physics.arcade.collide(this.balls, this.bricks, this.ballHitBrick, null, this);
         this.game.physics.arcade.overlap(this.powerups, this.paddle, this.powerupHitPaddle, null, this);
+        this.game.physics.arcade.overlap(this.powerups, this.dog, this.powerupHitPaddle, null, this);
 
         this.updateScore();
 
@@ -475,7 +480,6 @@ module.exports = class CanvasGame {
         ball.events.onOutOfBounds.add((ball) => {
             this.lostball.play();
             this.score += this.scores.ballLost;
-            this.paddle.width -= 1 * this.scaleFactorWidth;
             ball.kill();
         }, this);
     }
@@ -497,6 +501,7 @@ module.exports = class CanvasGame {
 
     destroyBrick(brick) {
         brick.kill();
+        this.score += this.scores.brickKill;
     }
 
     win() {
