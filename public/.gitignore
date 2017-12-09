@@ -3,9 +3,10 @@
 ####################
 
 .grunt
-public/css/styles.css
-public/css/styles.css.map
-public/js/bundle.js
+css/styles.css
+css/styles.css.map
+js/bundle.js
+js/bundle.js.map
 node_modules
 APPINFO.json
 
