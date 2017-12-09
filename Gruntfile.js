@@ -98,8 +98,8 @@ module.exports = function (grunt) {
     ]);
 
     grunt.registerTask('default', [
+        'webpack',
         'sass',
         'uglify',
-        'watch'
     ]);
 };
