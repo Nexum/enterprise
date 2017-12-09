@@ -19,6 +19,13 @@ module.exports = class CanvasGame {
 
         this.height = window.innerHeight * window.devicePixelRatio;
         this.width = window.innerWidth * window.devicePixelRatio;
+
+        if (this.height < this.width) {
+            let width = this.width;
+            this.width = this.height;
+            this.height = width;
+        }
+
         this.scaleFactorWidth = this.width / 320;
         this.scaleFactorHeight = this.height / 568;
         this.scaleFactorHeight = this.scaleFactorWidth;
@@ -47,6 +54,10 @@ module.exports = class CanvasGame {
             preload: this._preload.bind(this),
             create: this._createMenu.bind(this)
         });
+        this.game.state.add('onlyportrait', {
+            preload: this._preload.bind(this),
+            create: this._createWarning.bind(this)
+        });
         this.game.state.start("menu");
 
         this.user = null;
@@ -68,9 +79,20 @@ module.exports = class CanvasGame {
         this.api.saveHighscore(this.highscore);
     }
 
+    _createWarning() {
+        this.game.stage.backgroundColor = "#ffffff";
+        this.menuBackground = this.game.add.sprite(160 * this.scaleFactorWidth, (568 / 2) * this.scaleFactorHeight, 'playportrait');
+        this.menuBackground.scale.set(1, 1 * this.scaleFactorHeight);
+        this.menuBackground.anchor.setTo(0.5, 0.5);
+    }
+
     _createMenu() {
+        this.game.stage.backgroundColor = "#000000";
         let font1 = "font1";
         let font1white = "font1white";
+
+        this.beginText = this.game.add.bitmapText(10 * this.scaleFactorWidth, ((10 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize / 2);
+        this.beginText.setText(`${this.width}x${this.height} ${this.scaleFactorWidth} ${this.scaleFactorHeight}`);
 
         if (!this.lost && !this.won) {
             this.beginText = this.game.add.bitmapText(20 * this.scaleFactorWidth, ((20 * this.scaleFactorWidth) + this.textSize), font1white, "", this.textSize * 2);
@@ -151,6 +173,7 @@ module.exports = class CanvasGame {
         this.game.load.bitmapFont('font1white', 'font/LiquorstoreJazzWhite.png', 'font/LiquorstoreJazzWhite.fnt');
         this.game.load.spritesheet('explosion', 'img/explode.png', 128, 128);
         this.game.load.image("background", "img/background.jpg");
+        this.game.load.image("playportrait", "img/playportrait.png");
 
         this.game.load.spritesheet('bricks', 'img/vA/bricks.png', 32, 16);
         this.game.load.image("blocker", "img/vA/blocker.png");
@@ -171,6 +194,13 @@ module.exports = class CanvasGame {
         this.game.load.audio('lostball', 'sounds/lostball.mp3');
 
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        this.game.scale.forceOrientation(false, true);
+        this.game.scale.enterIncorrectOrientation.add(() => {
+            this.game.state.start("onlyportrait");
+        });
+        this.game.scale.leaveIncorrectOrientation.add(() => {
+            this.game.state.start("menu");
+        });
     }
 
     isDebug() {
