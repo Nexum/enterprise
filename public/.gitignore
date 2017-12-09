@@ -2,6 +2,9 @@
 ### PROJECT ########
 ####################
 
+public/css/styles.css
+public/css/styles.css.map
+public/js/bundle.js
 node_modules
 APPINFO.json
 
