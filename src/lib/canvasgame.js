@@ -244,7 +244,7 @@ module.exports = class CanvasGame {
                 brick.frame = health;
                 brick.health = health;
                 brick.initialhealth = brick.health;
-                brick.body.bounce.set(1);
+                brick.body.bounce.set(1.5);
                 brick.body.immovable = true;
                 brick.scale.set(this.scaleFactorWidth, this.scaleFactorHeight);
             }
@@ -398,7 +398,7 @@ module.exports = class CanvasGame {
         }
 
         this.game.physics.arcade.overlap(explosion, this.bricks, (explosion, brick) => {
-            brick.health -= 2;
+            brick.health = 0;
             if (brick.health <= 0) {
                 this.spawnBall(brick);
             }
@@ -424,7 +424,7 @@ module.exports = class CanvasGame {
         ball.events.onOutOfBounds.add((ball) => {
             this.lostball.play();
             this.score += this.scores.ballLost;
-            this.paddle.width -= 5 * this.scaleFactorWidth;
+            this.paddle.width -= 1 * this.scaleFactorWidth;
             ball.kill();
         }, this);
     }
