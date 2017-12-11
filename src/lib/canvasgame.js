@@ -379,6 +379,10 @@ module.exports = class CanvasGame {
             x: -400 * this.scaleFactorWidth,
             y: 300 * this.scaleFactorHeight
         }, time, Phaser.Easing.Linear.None, true, 0, 0, false);
+
+        if ("vibrate" in navigator) {
+            navigator.vibrate(time);
+        }
     }
 
     _update() {
